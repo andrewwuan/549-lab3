@@ -45,12 +45,15 @@ FILE uart_io = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
 
 // I2C code
 void TWIInit(void)
-{
+{   
+   printf("TWI init\n");
+
    //set SCL to 400kHz
    TWSR = 0x00;
    TWBR = 0x0C;
    //enable TWI
    TWCR = (1<<TWEN);
+
 }
 
 // Start signal
@@ -103,7 +106,7 @@ uint8_t TWIGetStatus(void)
 // Write page
 uint8_t EEWriteData(uint8_t reg_addr)
 {
-
+   printf("in EEWriteData\n");
    TWIStart();
    if (TWIGetStatus() != 0x08)
       return ERROR;
@@ -113,16 +116,8 @@ uint8_t EEWriteData(uint8_t reg_addr)
    if (TWIGetStatus() != 0x18)
       return ERROR;
 
-   TWIReadACK();
-   if (TWIGetStatus() != 0x18)
-      return ERROR;
-
    // Write register addr
    TWIWrite(reg_addr);
-   if (TWIGetStatus() != 0x18)
-      return ERROR;
-
-   TWIReadACK();
    if (TWIGetStatus() != 0x18)
       return ERROR;
 
@@ -133,7 +128,7 @@ uint8_t EEWriteData(uint8_t reg_addr)
 
 uint8_t EEReadPage(uint8_t *u8data)
 {
-
+   printf("in EEReadPage\n");
    TWIStart();
    if (TWIGetStatus() != 0x08)
       return ERROR;
@@ -143,7 +138,7 @@ uint8_t EEReadPage(uint8_t *u8data)
    if (TWIGetStatus() != 0x18)
       return ERROR;
 
-   TWIReadACK();
+   *u8data = TWIReadNACK();
    if (TWIGetStatus() != 0x18)
       return ERROR;
 
@@ -193,32 +188,36 @@ int main(void)
    uart_init();
    stdout = &uart_output;
    stdin  = &uart_input;
-
-   char input;
+   TWIInit();
 
    // Setup ports
    DDRB |= (1<<1) | (1<<0);
    PORTB |= (1<<0);
    PORTB &= ~(1<<1);
 
-   //Configure TIMER1
-   TCCR1A|=(1<<COM1A1)|(1<<COM1B1)|(1<<WGM11);        //NON Inverted PWM
-   TCCR1B|=(1<<WGM13)|(1<<WGM12)|(1<<CS11)|(1<<CS10); //PRESCALER=64 MODE 14(FAST PWM)
+   // //Configure TIMER1
+   // TCCR1A|=(1<<COM1A1)|(1<<COM1B1)|(1<<WGM11);        //NON Inverted PWM
+   // TCCR1B|=(1<<WGM13)|(1<<WGM12)|(1<<CS11)|(1<<CS10); //PRESCALER=64 MODE 14(FAST PWM)
 
-   ICR1=4999;  //fPWM=50Hz (Period = 20ms Standard).
+   // ICR1=4999;  //fPWM=50Hz (Period = 20ms Standard).
 
-   DDRD|=(1<<PD4)|(1<<PD5);   //PWM Pins as Out
+   // DDRD|=(1<<PD4)|(1<<PD5);   //PWM Pins as Out
 
    /* Print hello and then echo serial
    ** port data while blinking LED */
    printf("Hello world!\r\n");
    while(1) {
       
-      degree_0();
-      degree_90();
-      degree_135();
-      degree_180();
+      EEWriteData((uint8_t)81);
+      uint8_t product_id;
+      EEReadPage(&product_id);
+      printf("Product ID is %c\n", product_id);
 
+      // degree_0();
+      // degree_90();
+      // degree_135();
+      // degree_180();
+      Wait();
       //input = getchar();
       //printf("You wrote %c\r\n", input);
       PORTB ^= 0x01;
