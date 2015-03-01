@@ -11,6 +11,9 @@
 #define BAUD 115200
 #include <util/setbaud.h>
 
+#define ERROR -1
+#define SUCCESS 0
+
 void uart_init(void) {
    UBRR0H = UBRRH_VALUE;
    UBRR0L = UBRRL_VALUE;
@@ -97,6 +100,58 @@ uint8_t TWIGetStatus(void)
    return status;
 }
 
+// Write page
+uint8_t EEWriteData(uint8_t reg_addr)
+{
+
+   TWIStart();
+   if (TWIGetStatus() != 0x08)
+      return ERROR;
+
+   // write slave addr
+   TWIWrite((uint8_t)26);
+   if (TWIGetStatus() != 0x18)
+      return ERROR;
+
+   TWIReadACK();
+   if (TWIGetStatus() != 0x18)
+      return ERROR;
+
+   // Write register addr
+   TWIWrite(reg_addr);
+   if (TWIGetStatus() != 0x18)
+      return ERROR;
+
+   TWIReadACK();
+   if (TWIGetStatus() != 0x18)
+      return ERROR;
+
+   // Send stop code
+   TWIStop();
+   return SUCCESS;
+}
+
+uint8_t EEReadPage(uint8_t *u8data)
+{
+
+   TWIStart();
+   if (TWIGetStatus() != 0x08)
+      return ERROR;
+
+   // write slave addr
+   TWIWrite((uint8_t)27);
+   if (TWIGetStatus() != 0x18)
+      return ERROR;
+
+   TWIReadACK();
+   if (TWIGetStatus() != 0x18)
+      return ERROR;
+
+   // Send stop code
+   TWIStop();
+   return SUCCESS;
+}
+
 int main(void)
 {
 
@@ -120,5 +175,4 @@ int main(void)
       printf("You wrote %c\r\n", input);
       PORTB ^= 0x01;
    }
-
 }
