@@ -47,7 +47,7 @@ FILE uart_io = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
 // I2C code
 void TWIInit(void)
 {   
-   printf("TWI init\n");
+   printf("TWI init\r\n");
 
    //set SCL to 400kHz
    TWSR = 0x00;
@@ -60,10 +60,10 @@ void TWIInit(void)
 // Start signal
 void TWIStart(void)
 {
-   printf("In TWIStart");
+   printf("In TWIStart\r\n");
    TWCR = (1<<TWINT)|(1<<TWSTA)|(1<<TWEN);
    while ((TWCR & (1<<TWINT)) == 0);
-   printf("Leaving TWIStart");
+   printf("Leaving TWIStart\r\n");
 }
 
 // Stop signal
@@ -109,23 +109,23 @@ uint8_t TWIGetStatus(void)
 // Write page
 uint8_t EEWriteData(uint8_t reg_addr)
 {
-   printf("in EEWriteData\n");
+   printf("in EEWriteData\r\n");
    TWIStart();
    if (TWIGetStatus() != 0x08)
       return ERROR;
-   printf("after start\n");
+   printf("after start\r\n");
 
    // write slave addr
    TWIWrite((uint8_t)26);
    if (TWIGetStatus() != 0x18)
       return ERROR;
-   printf("after write\n");
+   printf("after write\r\n");
 
    // Write register addr
    TWIWrite(reg_addr);
    if (TWIGetStatus() != 0x18)
       return ERROR;
-   printf("after write\n");
+   printf("after write\r\n");
 
    // Send stop code
    TWIStop();
@@ -134,22 +134,22 @@ uint8_t EEWriteData(uint8_t reg_addr)
 
 uint8_t EEReadData(uint8_t *u8data)
 {
-   printf("in EEReadData\n");
+   printf("in EEReadData\r\n");
    TWIStart();
    if (TWIGetStatus() != 0x08)
       return ERROR;
-   printf("after start\n");
+   printf("after start\r\n");
 
    // write slave addr
    TWIWrite((uint8_t)27);
    if (TWIGetStatus() != 0x18)
       return ERROR;
-   printf("after write\n");
+   printf("after write\r\n");
 
    *u8data = TWIReadNACK();
    if (TWIGetStatus() != 0x18)
       return ERROR;
-   printf("after read\n");
+   printf("after read\r\n");
 
    // Send stop code
    TWIStop();
@@ -222,13 +222,13 @@ int main(void)
       
       EEWriteData((uint8_t)81);
       EEReadData(&product_id);
-      printf("Product ID is %c\n", product_id);
+      printf("Product ID is %c\r\n", product_id);
 
       // degree_0();
       // degree_90();
       // degree_135();
       // degree_180();
-      Wait();
+      // Wait();
       //input = getchar();
       //printf("You wrote %c\r\n", input);
       // PORTB ^= 0x01;
