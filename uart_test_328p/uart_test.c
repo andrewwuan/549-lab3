@@ -60,8 +60,10 @@ void TWIInit(void)
 // Start signal
 void TWIStart(void)
 {
+   printf("In TWIStart");
    TWCR = (1<<TWINT)|(1<<TWSTA)|(1<<TWEN);
    while ((TWCR & (1<<TWINT)) == 0);
+   printf("Leaving TWIStart");
 }
 
 // Stop signal
@@ -199,9 +201,9 @@ int main(void)
    TWIInit();
 
    // Setup ports
-   DDRB |= (1<<1) | (1<<0);
-   PORTB |= (1<<0);
-   PORTB &= ~(1<<1);
+   // DDRB |= (1<<1) | (1<<0);
+   // PORTB |= (1<<0);
+   // PORTB &= ~(1<<1);
 
    // //Configure TIMER1
    // TCCR1A|=(1<<COM1A1)|(1<<COM1B1)|(1<<WGM11);        //NON Inverted PWM
@@ -229,6 +231,6 @@ int main(void)
       Wait();
       //input = getchar();
       //printf("You wrote %c\r\n", input);
-      PORTB ^= 0x01;
+      // PORTB ^= 0x01;
    }
 }
