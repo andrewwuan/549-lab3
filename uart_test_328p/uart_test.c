@@ -1,4 +1,3 @@
-
 /* some includes */
 #include <inttypes.h>
 #include <avr/io.h>
@@ -160,78 +159,72 @@ uint8_t EEReadData(uint8_t *u8data)
 //Simple Wait Function
 void Wait()
 {
-   uint8_t i;
-   for(i=0;i<50;i++)
-   {
-      _delay_loop_2(0);
-      _delay_loop_2(0);
-      _delay_loop_2(0);
-   }
+   _delay_ms(1000);
 
 }
 
 void degree_0 () {
-  OCR1A=97;   //0 degree
+  OCR1B=1900;   //0 degree
   Wait();
 }
 
 
 void degree_90 () {
-  OCR1A=316;  //90 degree
+  OCR1B=3000;  //90 degree
   Wait();
 }
 
 void degree_135 () {
-  OCR1A=425;  //135 degree
+  OCR1B=3500;  //135 degree
   Wait();
 }
 
 void degree_180 () {
-  OCR1A=535;  //180 degree
+  OCR1B=4500;  //180 degree
   Wait();
 }
 
+
 int main(void)
 {
+   cli();
 
-   /* Setup serial port */
+   /* Setup uart port */
    uart_init();
    stdout = &uart_output;
    stdin  = &uart_input;
 
-   // TWIInit();
-
    // Setup ports
-   // DDRB |= (1<<1) | (1<<0);
-   // PORTB |= (1<<0);
-   // PORTB &= ~(1<<1);
+   DDRB |= (1<<1) | (1<<0);
+   PORTB |= (1<<0);
+   PORTB &= ~(1<<1);
 
-   //Configure TIMER1
-   TCCR1A|=(1<<COM1A1)|(1<<COM1B1)|(1<<WGM11);        //NON Inverted PWM
-   TCCR1B|=(1<<WGM13)|(1<<WGM12)|(1<<CS11)|(1<<CS10); //PRESCALER=64 MODE 14(FAST PWM)
+   /* Setup TWI for I2C */
+   TWIInit();
 
-   ICR1=4999;  //fPWM=50Hz (Period = 20ms Standard).
+   // Configure Servo
+   TCCR1A=(1<<COM1B1)|(1<<COM1A1)|(1<<WGM11);        // NON Inverted PWM
+   TCCR1B=(1<<WGM13)|(1<<WGM12)|(1<<CS11);   //PRESCALER=64 MODE 14(FAST PWM)
+   ICR1=39999;  // fPWM=50Hz (Period = 20ms Standard).
+   DDRB|=(1<<PB2);   //PWM Pins as Out
 
-   DDRD|=(1<<PD4)|(1<<PD5);   //PWM Pins as Out
+   sei();
 
-   /* Print hello and then echo serial
-   ** port data while blinking LED */
+   /* Print hello  */
    printf("Hello world!\r\n");
-   // uint8_t* idp = (uint8_t *)malloc(8);
+
+   /* Pointer for EEReadData */
+   uint8_t* idp = (uint8_t *)malloc(8);
 
    while(1) {
       
-      // EEWriteData((uint8_t)81);
-      // EEReadData(idp);
-      // printf("Product ID is %c\r\n", *idp);
+      EEWriteData((uint8_t)81);
+      EEReadData(idp);
+      printf("Product ID is %c\r\n", *idp);
 
       degree_0();
-      degree_90();
-      degree_135();
       degree_180();
-      // Wait();
-      //input = getchar();
-      //printf("You wrote %c\r\n", input);
-      // PORTB ^= 0x01;
+
+      PORTB ^= 0x01;
    }
 }
