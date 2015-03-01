@@ -7,6 +7,7 @@
 #include <avr/wdt.h>
 #include <util/delay.h>
 #include <stdio.h>
+#include <util/twi.h>
 
 #define BAUD 115200
 #include <util/setbaud.h>
@@ -110,37 +111,43 @@ uint8_t EEWriteData(uint8_t reg_addr)
    TWIStart();
    if (TWIGetStatus() != 0x08)
       return ERROR;
+   printf("after start\n");
 
    // write slave addr
    TWIWrite((uint8_t)26);
    if (TWIGetStatus() != 0x18)
       return ERROR;
+   printf("after write\n");
 
    // Write register addr
    TWIWrite(reg_addr);
    if (TWIGetStatus() != 0x18)
       return ERROR;
+   printf("after write\n");
 
    // Send stop code
    TWIStop();
    return SUCCESS;
 }
 
-uint8_t EEReadPage(uint8_t *u8data)
+uint8_t EEReadData(uint8_t *u8data)
 {
-   printf("in EEReadPage\n");
+   printf("in EEReadData\n");
    TWIStart();
    if (TWIGetStatus() != 0x08)
       return ERROR;
+   printf("after start\n");
 
    // write slave addr
    TWIWrite((uint8_t)27);
    if (TWIGetStatus() != 0x18)
       return ERROR;
+   printf("after write\n");
 
    *u8data = TWIReadNACK();
    if (TWIGetStatus() != 0x18)
       return ERROR;
+   printf("after read\n");
 
    // Send stop code
    TWIStop();
@@ -188,6 +195,7 @@ int main(void)
    uart_init();
    stdout = &uart_output;
    stdin  = &uart_input;
+
    TWIInit();
 
    // Setup ports
@@ -206,11 +214,12 @@ int main(void)
    /* Print hello and then echo serial
    ** port data while blinking LED */
    printf("Hello world!\r\n");
+   uint8_t product_id;
+
    while(1) {
       
       EEWriteData((uint8_t)81);
-      uint8_t product_id;
-      EEReadPage(&product_id);
+      EEReadData(&product_id);
       printf("Product ID is %c\n", product_id);
 
       // degree_0();
