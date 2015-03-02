@@ -62,6 +62,7 @@ void TWIStart(void)
 {
    printf("In TWIStart\r\n");
    TWCR = (1<<TWINT)|(1<<TWSTA)|(1<<TWEN);
+   printf("TWCR=%b\n", TWCR);
    while ((TWCR & (1<<TWINT)) == 0);
    printf("Leaving TWIStart\r\n");
 }
@@ -164,7 +165,7 @@ void Wait()
 }
 
 void degree_0 () {
-  OCR1B=1900;   //0 degree
+  OCR1B=1800;   //0 degree
   Wait();
 }
 
@@ -175,7 +176,7 @@ void degree_90 () {
 }
 
 void degree_135 () {
-  OCR1B=3500;  //135 degree
+  OCR1B=3800;  //135 degree
   Wait();
 }
 
@@ -218,13 +219,13 @@ int main(void)
 
    while(1) {
       
-      EEWriteData((uint8_t)81);
-      EEReadData(idp);
-      printf("Product ID is %c\r\n", *idp);
+      // EEWriteData((uint8_t)81);
+      // EEReadData(idp);
+      // printf("Product ID is %c\r\n", *idp);
 
       degree_0();
       degree_180();
 
-      PORTB ^= 0x01;
+      // PORTB ^= 0x01;
    }
 }
