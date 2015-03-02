@@ -44,6 +44,8 @@ FILE uart_input = FDEV_SETUP_STREAM(NULL, uart_getchar, _FDEV_SETUP_READ);
 FILE uart_io = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
 
 
+#define ERROR_STR(str) printf(str);
+
 // I2C code
 void TWIInit(void)
 {   
@@ -57,44 +59,79 @@ void TWIInit(void)
 
 }
 
+#define START 0x08
+#define MT_SLA_ACK 0x18
+#define MT_DATA_ACK 0x28
+#define MR_SLA_ACK 0x40
+
+
 // Start signal
 void TWIStart(void)
 {
-   printf("In TWIStart\r\n");
+   printf("Enter TWIStart\r\n");
    TWCR = (1<<TWINT)|(1<<TWSTA)|(1<<TWEN);
-   printf("TWCR=%b\n", TWCR);
-   while ((TWCR & (1<<TWINT)) == 0);
+   while (!(TWCR & (1<<TWINT)));
+
+   if ((TWSR & 0xF8) != START)
+      ERROR_STR("TWI Start failed\r\n");
    printf("Leaving TWIStart\r\n");
 }
 
 // Stop signal
 void TWIStop(void)
 {
+   printf("Enter TWIStop\r\n");
    TWCR = (1<<TWINT)|(1<<TWSTO)|(1<<TWEN);
+   printf("Leaving TWIStop\r\n");
 }
 
 // I2C write
-void TWIWrite(uint8_t u8data)
+void TWISLAWWrite(uint8_t u8data)
 {
+   printf("Enter TWISLAWWrite\r\n");
    TWDR = u8data;
    TWCR = (1<<TWINT)|(1<<TWEN);
-   while ((TWCR & (1<<TWINT)) == 0);
+   while (!(TWCR & (1<<TWINT)));
+
+   if ((TWSR & 0xF8) != MT_SLA_ACK)
+      ERROR_STR("TWISLAWWrite failed\r\n");
+   printf("Leaving TWISLAWWrite\r\n");
+}
+
+// I2C write
+void TWISLARWrite(uint8_t u8data)
+{
+   printf("Enter TWISLARWrite\r\n");
+   TWDR = u8data;
+   TWCR = (1<<TWINT)|(1<<TWEN);
+   while (!(TWCR & (1<<TWINT)));
+
+   if ((TWSR & 0xF8) != MR_SLA_ACK)
+      ERROR_STR("TWISLARWrite failed\r\n");
+   printf("Leaving TWISLARWrite\r\n");
+}
+
+// I2C write
+void TWIDataWrite(uint8_t u8data)
+{
+   printf("Enter TWIDataWrite\r\n");
+   TWDR = u8data;
+   TWCR = (1<<TWINT)|(1<<TWEN);
+   while (!(TWCR & (1<<TWINT)));
+
+   if ((TWSR & 0xF8) != MT_DATA_ACK)
+      ERROR_STR("TWIDataWrite failed\r\n");
+   printf("Leaving TWIDataWrite\r\n");
 }
 
 // I2C read
 uint8_t TWIReadACK(void)
 {
+   printf("Enter TWIReadACK\r\n");
    TWCR = (1<<TWINT)|(1<<TWEN)|(1<<TWEA);
    while ((TWCR & (1<<TWINT)) == 0);
-   return TWDR;
-}
 
-// I2C read
-// (read byte with NACK)
-uint8_t TWIReadNACK(void)
-{
-   TWCR = (1<<TWINT)|(1<<TWEN);
-   while ((TWCR & (1<<TWINT)) == 0);
+   printf("Leaving TWIReadACK\r\n");
    return TWDR;
 }
 
@@ -110,50 +147,39 @@ uint8_t TWIGetStatus(void)
 // Write page
 uint8_t EEWriteData(uint8_t reg_addr)
 {
-   printf("in EEWriteData\r\n");
+   printf("Enter EEWriteData\r\n");
    TWIStart();
-   if (TWIGetStatus() != 0x08)
-      return ERROR;
-   printf("after start\r\n");
 
    // write slave addr
-   TWIWrite((uint8_t)26);
-   if (TWIGetStatus() != 0x18)
-      return ERROR;
-   printf("after write\r\n");
+   TWISLAWWrite((uint8_t)0x26);
 
    // Write register addr
-   TWIWrite(reg_addr);
-   if (TWIGetStatus() != 0x18)
-      return ERROR;
-   printf("after write\r\n");
+   TWIDataWrite(reg_addr);
 
    // Send stop code
    TWIStop();
+
+   printf("Leaving EEWriteData\r\n");
    return SUCCESS;
 }
 
 uint8_t EEReadData(uint8_t *u8data)
 {
-   printf("in EEReadData\r\n");
+   printf("Enter EEReadData\r\n");
+
    TWIStart();
-   if (TWIGetStatus() != 0x08)
-      return ERROR;
-   printf("after start\r\n");
 
    // write slave addr
-   TWIWrite((uint8_t)27);
-   if (TWIGetStatus() != 0x18)
-      return ERROR;
-   printf("after write\r\n");
+   TWISLARWrite((uint8_t)0x27);
 
-   *u8data = TWIReadNACK();
-   if (TWIGetStatus() != 0x18)
-      return ERROR;
-   printf("after read\r\n");
+   *u8data = TWIReadACK();
+   if (TWIGetStatus() != 0x50)
+      ERROR_STR("TWIReadACK failed\r\n");
 
    // Send stop code
    TWIStop();
+
+   printf("Leaving EEReadData");
    return SUCCESS;
 }
 
@@ -258,9 +284,9 @@ int main(void)
 
    while(1) {
       
-      // EEWriteData((uint8_t)81);
-      // EEReadData(idp);
-      // printf("Product ID is %c\r\n", *idp);
+      EEWriteData((uint8_t)0x81);
+      EEReadData(idp);
+      printf("Product ID is %c\r\n", *idp);
 
       rotate(0);
       rotate(degree);
