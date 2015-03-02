@@ -49,13 +49,16 @@ FILE uart_io = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
 // I2C code
 void TWIInit(void)
 {   
-   printf("TWI init\r\n");
+   printf("Enter TWI init\r\n");
 
    //set SCL to 400kHz
    TWSR = 0x00;
    TWBR = 0x0C;
+
    //enable TWI
    TWCR = (1<<TWEN);
+
+   printf("Leaving TWI init, TWCR=%d\r\n", TWCR);
 
 }
 
@@ -70,6 +73,9 @@ void TWIStart(void)
 {
    printf("Enter TWIStart\r\n");
    TWCR = (1<<TWINT)|(1<<TWSTA)|(1<<TWEN);
+
+   // printf("TWCR=%d (should be %d)\r\n", TWCR, (1<<TWINT)|(1<<TWSTA)|(1<<TWEN));
+
    while (!(TWCR & (1<<TWINT)));
 
    if ((TWSR & 0xF8) != START)
