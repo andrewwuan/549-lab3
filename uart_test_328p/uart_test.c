@@ -255,6 +255,8 @@ int handler(int proc) {
 }
 
 
+
+
 int main(void)
 {
    cli();
@@ -287,6 +289,7 @@ int main(void)
    uint8_t* idp = (uint8_t *)malloc(8);
 
    int degree = 0;
+   char input;
 
    while(1) {
       
@@ -294,12 +297,18 @@ int main(void)
       EEReadData(idp);
       printf("Product ID is %c\r\n", *idp);
 
-      rotate(0);
+      input = getchar();
+      if (input == 'a') {
+        degree -= 30;
+      } else if (input == 'd') {
+        degree += 30;
+      }
+
+      if (degree < 0) degree = 0;
+      if (degree > 180) degree = 180;
+
       rotate(degree);
 
-      degree += 30;
-      if (degree == 210) degree = 0;
-
-      // PORTB ^= 0x01;
+      PORTB ^= 0x01;
    }
 }
