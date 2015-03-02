@@ -190,36 +190,18 @@ uint8_t EEReadData(uint8_t *u8data)
 }
 
 //Simple Wait Function
-void Wait()
+void Wait(int interval)
 {
-   _delay_ms(1000);
+   int i;
+   for ( i = 0 ; i < interval; i++) {
+      _delay_ms(20);
+   }
 
 }
 
-void degree_0 () {
-  OCR1B=1800;   //0 degree
-  Wait();
-}
-
-
-void degree_90 () {
-  OCR1B=3000;  //90 degree
-  Wait();
-}
-
-void degree_135 () {
-  OCR1B=3800;  //135 degree
-  Wait();
-}
-
-void degree_180 () {
-  OCR1B=4500;  //180 degree
-  Wait();
-}
-
-void rotate(int degree) {
+void rotate(int degree, int interval) {
    OCR1B = 1800 + degree * 15;
-   Wait();
+   Wait(interval);
 }
 
 
@@ -272,7 +254,7 @@ int main(void)
    PORTB &= ~(1<<1);
 
    /* Setup TWI for I2C */
-   TWIInit();
+   // TWIInit();
 
    // Configure Servo
    TCCR1A=(1<<COM1B1)|(1<<COM1A1)|(1<<WGM11);        // NON Inverted PWM
@@ -286,28 +268,39 @@ int main(void)
    printf("Hello world!\r\n");
 
    /* Pointer for EEReadData */
-   uint8_t* idp = (uint8_t *)malloc(8);
+   // uint8_t* idp = (uint8_t *)malloc(8);
 
-   int degree = 0;
-   char input;
+   int degree = 90;
+   char input;   
+   int interval = 10;
+
+
+   rotate(degree, interval);
+
 
    while(1) {
       
-      EEWriteData((uint8_t)0x81);
-      EEReadData(idp);
-      printf("Product ID is %c\r\n", *idp);
+      // EEWriteData((uint8_t)0x81);
+      // EEReadData(idp);
+      // printf("Product ID is %c\r\n", *idp);
 
       input = getchar();
       if (input == 'a') {
         degree -= 30;
       } else if (input == 'd') {
         degree += 30;
+      } else if (input == 'w') {
+         interval -= 50;
+      } else if (input == 's') {
+         interval += 50;
       }
 
       if (degree < 0) degree = 0;
       if (degree > 180) degree = 180;
+      if (interval < 0) interval = 0;
+      if (interval > 20) interval = 20;
 
-      rotate(degree);
+      rotate(degree, interval);
 
       PORTB ^= 0x01;
    }
