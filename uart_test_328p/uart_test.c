@@ -185,6 +185,43 @@ void degree_180 () {
   Wait();
 }
 
+void rotate(int degree) {
+   OCR1B = 1800 + degree * 15;
+   Wait();
+}
+
+
+// Switch logic
+#define SWITCH_SPEED 20
+
+int mode = 0;
+int lastProc = 0;
+
+int abs(int x) {
+    return x > 0 ? x : -x;
+}
+
+int procToAngleMode0(int proc) {
+    return (int)(proc * 18 / 10.f);
+}
+
+int procToAngleMode1(int proc) {
+    return 180 - procToAngleMode1(proc);
+}
+
+int handler(int proc) {
+    if (abs(proc - lastProc) > SWITCH_SPEED) {
+        mode = 1 - mode;
+    }
+    lastProc = proc;
+
+    if (mode == 0) {
+        return procToAngleMode0(proc);
+    } else {
+        return procToAngleMode1(proc);
+    }
+}
+
 
 int main(void)
 {
@@ -217,14 +254,19 @@ int main(void)
    /* Pointer for EEReadData */
    uint8_t* idp = (uint8_t *)malloc(8);
 
+   int degree = 0;
+
    while(1) {
       
       // EEWriteData((uint8_t)81);
       // EEReadData(idp);
       // printf("Product ID is %c\r\n", *idp);
 
-      degree_0();
-      degree_180();
+      rotate(0);
+      rotate(degree);
+
+      degree += 30;
+      if (degree == 210) degree = 0;
 
       // PORTB ^= 0x01;
    }
